@@ -71,3 +71,22 @@ exports.getCustomer = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getCustomers = async (req, res, next) => {
+  try {
+    const customers = await Customer.findAll({
+      attributes: ["id", "name", "email", "phone"],
+      order: [["name", "ASC"]],
+    });
+
+    res.status(200).json({
+      status: "success",
+      results: customers.length,
+      data: {
+        customers,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
