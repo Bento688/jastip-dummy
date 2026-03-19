@@ -1,0 +1,78 @@
+{
+  "info": {
+    "name": "Jastip API - Benedict",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Benedict\",\n    \"email\": \"benedict@example.com\",\n    \"phone\": \"0912345678\"\n}",
+              "options": { "json": { "language": "json" } }
+            },
+            "url": { "host": ["{{baseUrl}}"], "path": ["api", "customers"] }
+          }
+        },
+        {
+          "name": "Get Customer (Eager Load)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "{{customerUuid}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": \"{{customerUuid}}\",\n    \"pickup_location\": \"Tamsui Station\"\n}",
+              "options": { "json": { "language": "json" } }
+            },
+            "url": { "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "Add Item to Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"order_id\": \"{{orderUuid}}\",\n    \"product_name\": \"Uniqlo Shirt\",\n    \"estimated_price\": 390,\n    \"quantity\": 1\n}",
+              "options": { "json": { "language": "json" } }
+            },
+            "url": { "host": ["{{baseUrl}}"], "path": ["api", "items"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "customerUuid", "value": "" },
+    { "key": "orderUuid", "value": "" }
+  ]
+}
