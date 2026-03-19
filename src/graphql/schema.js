@@ -8,6 +8,9 @@ const typeDefs = gql`
     phone: String!
     # A customer can have an array of orders
     orders: [Order!]
+
+    totalOrdersCount: Int!
+    lifetimeValueSpent: Int!
   }
 
   type Order {
@@ -25,6 +28,7 @@ const typeDefs = gql`
     target_url: String
     estimated_price: Int!
     quantity: Int!
+    order: Order!
   }
 
   type Query {
@@ -33,6 +37,8 @@ const typeDefs = gql`
 
     # The Shopper's Dashboard: Get orders, optionally filtered by status
     orders(status: String): [Order!]!
+
+    items(search: String, orderStatus: String): [Item!]!
   }
 `;
 
