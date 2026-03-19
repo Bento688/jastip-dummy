@@ -4,6 +4,9 @@ require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 
+// middleware
+const errorHandler = require("./middlewares/errorHandler.js");
+
 // db
 const db = require("./models");
 
@@ -43,22 +46,14 @@ app.use("/api/items", itemRouter);
 // Fallback & Error Handling
 // =================================
 
-// 404 handler: catches requests that don't match any route
 app.use((req, res, next) => {
-  res.status(404).json({
-    status: "error",
-    message: `Route not found: ${req.originalUrl}`,
-  });
+  const error = new Error(`Can't find ${req.originalUrl} on this server.`);
+  error.statusCode = 404;
+  next(error);
 });
 
 // Global error handler: catches system crashes and errors
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    status: "error",
-    message: err.message || "Internal Server Error",
-  });
-});
+app.use(errorHandler);
 
 // ==================================
 // DB CONNECTION & SERVER LISTENING
