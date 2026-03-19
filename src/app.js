@@ -4,6 +4,9 @@ require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 
+const { ApolloServer } = require("@apollo/server");
+const { expressMiddleware } = require("@as-integrations/express5");
+
 // middleware
 const errorHandler = require("./middlewares/errorHandler.js");
 
@@ -14,6 +17,9 @@ const db = require("./models");
 const customerRouter = require("./routes/customerRoutes.js");
 const orderRouter = require("./routes/orderRoutes.js");
 const itemRouter = require("./routes/itemRoutes.js");
+
+const typeDefs = require("./graphql/schema.js");
+const resolvers = require("./graphql/resolvers.js");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -42,32 +48,46 @@ app.use("/api/customers", customerRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/items", itemRouter);
 
-// =================================
-// Fallback & Error Handling
-// =================================
+// =============================
+// GraphQL server
+// =============================
 
-app.use((req, res, next) => {
-  const error = new Error(`Can't find ${req.originalUrl} on this server.`);
-  error.statusCode = 404;
-  next(error);
-});
+async function startServer() {
+  const apolloServer = new ApolloServer({
+    typeDefs,
+    resolvers,
+  });
 
-// Global error handler: catches system crashes and errors
-app.use(errorHandler);
+  await apolloServer.start();
 
-// ==================================
-// DB CONNECTION & SERVER LISTENING
-// ==================================
+  app.use("/graphql", expressMiddleware(apolloServer));
 
-// test connection
-db.sequelize
-  .authenticate()
-  .then(() => {
-    console.log("Database connection pool established successfully.");
+  // =================================
+  // Fallback & Error Handling
+  // =================================
 
-    // Only start listening for HTTP requests if the database is alive
-    app.listen(PORT, () => {
-      console.log(`
+  app.use((req, res, next) => {
+    const error = new Error(`Can't find ${req.originalUrl} on this server.`);
+    error.statusCode = 404;
+    next(error);
+  });
+
+  // Global error handler: catches system crashes and errors
+  app.use(errorHandler);
+
+  // ==================================
+  // DB CONNECTION & SERVER LISTENING
+  // ==================================
+
+  // test connection
+  db.sequelize
+    .authenticate()
+    .then(() => {
+      console.log("Database connection pool established successfully.");
+
+      // Only start listening for HTTP requests if the database is alive
+      app.listen(PORT, () => {
+        console.log(`
         /$$$$$  /$$$$$$   /$$$$$$  /$$$$$$$$ /$$$$$$ /$$$$$$$         /$$$$$$  /$$$$$$$  /$$$$$$
        |__  $$ /$$__  $$ /$$__  $$|__  $$__/|_  $$_/| $$__  $$       /$$__  $$| $$__  $$|_  $$_/
           | $$| $$  \\ $$| $$  \\__/   | $$     | $$  | $$  \\ $$      | $$  \\ $$| $$  \\ $$  | $$  
@@ -77,12 +97,16 @@ db.sequelize
     |  $$$$$$/| $$  | $$|  $$$$$$/   | $$    /$$$$$$| $$            | $$  | $$| $$       /$$$$$$
      \\______/ |__/  |__/ \\______/    |__/   |______/|__/            |__/  |__/|__/      |______/
   `);
-      console.log(`API running on http://localhost:${PORT}`);
-      console.log(`Health check: http://localhost:${PORT}/api/health`);
+        console.log(`API running on http://localhost:${PORT}`);
+        console.log(`Health check: http://localhost:${PORT}/api/health`);
+        console.log(`GraphQL Sandbox: http://localhost:${PORT}/graphql`);
+      });
+    })
+    .catch((err) => {
+      // If db fails, crash the app immediately
+      console.error("Unable to connect to DB:", err.message);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    // If db fails, crash the app immediately
-    console.error("Unable to connect to DB:", err.message);
-    process.exit(1);
-  });
+}
+
+startServer();
