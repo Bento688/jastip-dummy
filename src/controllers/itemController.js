@@ -41,3 +41,60 @@ exports.createItem = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updateItem = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const { product_name, target_url, estimated_price, quantity } = req.body;
+
+    const item = await Item.findByPk(id);
+
+    if (!item) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No item found with that UUID",
+      });
+    }
+
+    // sequelize will only change the fields that actually changed.
+    // it will ignore "undefined" values
+    await item.update({
+      product_name,
+      target_url,
+      estimated_price,
+      quantity,
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        item,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteItem = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Item.destroy returns the number of rows deleted in the DB
+    const deletedRowCount = await Item.destroy({
+      where: { id },
+    });
+
+    if (deletedRowCount === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No item found with that UUID to delete",
+      });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
