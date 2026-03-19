@@ -5,12 +5,12 @@ module.exports = {
     await queryInterface.createTable("Items", {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
       },
       order_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false, // an item MUST belong to an order
         references: {
           model: "Orders",
@@ -51,4 +51,3 @@ module.exports = {
     await queryInterface.dropTable("Items");
   },
 };
-

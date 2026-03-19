@@ -9,6 +9,7 @@ const db = require("./models");
 
 // routes
 const customerRouter = require("./routes/customerRoutes.js");
+const orderRouter = require("./routes/orderRoutes.js");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -34,6 +35,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/customers", customerRouter);
+app.use("/api/orders", orderRouter);
 
 // =================================
 // Fallback & Error Handling

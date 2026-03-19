@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
 
   Item.init(
     {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
       order_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -49,4 +54,3 @@ module.exports = (sequelize, DataTypes) => {
 
   return Item;
 };
-
