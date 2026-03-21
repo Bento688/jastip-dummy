@@ -3,6 +3,7 @@ require("dotenv").config();
 // imports
 const express = require("express");
 const morgan = require("morgan");
+const cors = require("cors");
 
 const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@as-integrations/express5");
@@ -28,6 +29,16 @@ const PORT = process.env.PORT || 8000;
 // Global Middlewares
 // =========================
 
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://192.168.0.10:3000",
+    ],
+    credentials: true,
+  }),
+);
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

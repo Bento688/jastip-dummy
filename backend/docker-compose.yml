@@ -1,7 +1,7 @@
 services:
   db:
-    image: mysql:8.0
-    container_name: jastip_mysql
+    image: mysql:8.0.36
+    container_name: jastip_mysql_core
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -9,7 +9,7 @@ services:
       MYSQL_USER: jastip_user
       MYSQL_PASSWORD: jastip_password
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 
