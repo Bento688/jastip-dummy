@@ -16,6 +16,7 @@ import {
   TableColumnsType,
   message,
 } from "antd";
+import NewOrderDrawer from "@/components/NewOrderDrawer";
 
 import axiosInstance from "../lib/axios";
 
@@ -66,11 +67,18 @@ interface Order {
   items: Item[];
 }
 
+interface GetOrdersResponse {
+  orders: Order[];
+}
+
 export default function FulfillmentDashboard() {
   // execute query
-  const { loading, error, data, refetch } = useQuery(GET_PENDING_ORDERS);
+  const { loading, error, data, refetch } =
+    useQuery<GetOrdersResponse>(GET_PENDING_ORDERS);
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleMarkPurchased = async (orderId: string) => {
     try {
@@ -84,7 +92,7 @@ export default function FulfillmentDashboard() {
 
       // Apollo re-fetches the fresh list of Pending Orders
       await refetch();
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       message.error("Failed to update order status.");
     } finally {
@@ -178,10 +186,18 @@ export default function FulfillmentDashboard() {
   };
   return (
     <main className="min-h-screen p-8 bg-gray-50">
-      <Card>
-        <Title level={2} className="mb-6">
-          Store Fulfillment Board
-        </Title>
+      <Card
+        title={
+          <Title level={2} className="m-0">
+            Store Fulfillment Board
+          </Title>
+        }
+        extra={
+          <Button type="primary" onClick={() => setIsDrawerOpen(true)}>
+            + New Order
+          </Button>
+        }
+      >
         <Table
           columns={columns}
           expandable={{ expandedRowRender }}
@@ -189,6 +205,12 @@ export default function FulfillmentDashboard() {
           pagination={{ pageSize: 10 }}
         />
       </Card>
+
+      <NewOrderDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onSuccess={() => refetch()}
+      />
     </main>
   );
 }

@@ -1,23 +1,38 @@
 const db = require("../models");
-const Order = db.Order;
+const { Order, Item, sequelize } = db;
 
 exports.createOrder = async (req, res, next) => {
+  const t = await sequelize.transaction();
   try {
     // we only require the absolute minimum data to start an order container
-    const { customer_id, pickup_location } = req.body;
+    const { customer_id, pickup_location, items } = req.body;
 
-    const newOrder = await Order.create({
-      customer_id,
-      pickup_location,
-    });
+    const newOrder = await Order.create(
+      { customer_id, pickup_location },
+      { transaction: t },
+    );
+
+    if (items && items.length > 0) {
+      const itemsWithOrderId = items.map((item) => ({
+        ...item,
+        order_id: newOrder.id,
+      }));
+
+      await Item.bulkCreate(itemsWithOrderId, { transaction: t });
+    }
+
+    await t.commit();
 
     res.status(201).json({
       status: "success",
+      message: "Order and items created successfully.",
       data: {
-        order: newOrder,
+        orderId: newOrder.id,
       },
     });
   } catch (error) {
+    t.rollback();
+
     if (error.name === "SequelizeForeignKeyConstraintError") {
       return res.status(400).json({
         status: "fail",
