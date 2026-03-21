@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
@@ -12,8 +12,12 @@ import {
   Spin,
   Alert,
   Card,
+  Button,
   TableColumnsType,
+  message,
 } from "antd";
+
+import axiosInstance from "../lib/axios";
 
 const { Title } = Typography;
 
@@ -64,7 +68,29 @@ interface Order {
 
 export default function FulfillmentDashboard() {
   // execute query
-  const { loading, error, data } = useQuery(GET_PENDING_ORDERS);
+  const { loading, error, data, refetch } = useQuery(GET_PENDING_ORDERS);
+
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const handleMarkPurchased = async (orderId: string) => {
+    try {
+      setUpdatingId(orderId);
+
+      await axiosInstance.patch(`/orders/${orderId}/status`, {
+        status: "Purchased",
+      });
+
+      message.success("Order marked as Purchased!");
+
+      // Apollo re-fetches the fresh list of Pending Orders
+      await refetch();
+    } catch (error: any) {
+      console.error(error);
+      message.error("Failed to update order status.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   // ======================
   // ERROR & LOADING STATES
@@ -105,6 +131,20 @@ export default function FulfillmentDashboard() {
       dataIndex: "status",
       key: "status",
       render: (status) => <Tag color="processing">{status}</Tag>,
+    },
+
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          loading={updatingId === record.id}
+          onClick={() => handleMarkPurchased(record.id)}
+        >
+          Mark Purchased
+        </Button>
+      ),
     },
   ];
 
