@@ -7,6 +7,20 @@ exports.createItem = async (req, res, next) => {
     const { order_id, product_name, target_url, estimated_price, quantity } =
       req.body;
 
+    const uuidV4Regex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    if (
+      !order_id ||
+      typeof order_id !== "string" ||
+      !uuidV4Regex.test(order_id)
+    ) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid order_id format. Must be a UUID v4 string.",
+      });
+    }
+
     const newItem = await Item.create({
       order_id,
       product_name,

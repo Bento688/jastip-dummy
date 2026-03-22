@@ -24,8 +24,11 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
       },
       order_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
+        validate: {
+          isUUID: 4,
+        },
       },
       product_name: {
         type: DataTypes.STRING,
