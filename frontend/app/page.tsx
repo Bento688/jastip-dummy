@@ -14,6 +14,7 @@ import {
   Card,
   Button,
   TableColumnsType,
+  Tabs,
   message,
 } from "antd";
 import NewOrderDrawer from "@/components/NewOrderDrawer";
@@ -26,9 +27,9 @@ const { Title } = Typography;
 // GraphQL Query
 // ======================
 
-const GET_PENDING_ORDERS = gql`
-  query ShoppersDashBoard {
-    orders(status: "Pending") {
+const GET_ORDERS_BY_STATUS = gql`
+  query OrdersByStatus($status: String!) {
+    orders(status: $status) {
       id
       status
       pickup_location
@@ -58,7 +59,7 @@ interface Item {
 
 interface Order {
   id: string;
-  status: string;
+  status: OrderStatus;
   pickup_location: string;
   customer: {
     name: string;
@@ -71,10 +72,37 @@ interface GetOrdersResponse {
   orders: Order[];
 }
 
+const ORDER_STATUSES = [
+  "Pending",
+  "Purchased",
+  "Shipped",
+  "Ready for Pickup",
+  "Completed",
+] as const;
+
+type OrderStatus = (typeof ORDER_STATUSES)[number];
+type DashboardTabStatus = OrderStatus;
+
+interface GetOrdersVariables {
+  status: DashboardTabStatus;
+}
+
 export default function FulfillmentDashboard() {
+  const [activeTab, setActiveTab] = useState<DashboardTabStatus>("Pending"); // default to "pending"
+
+  const tabItems = ORDER_STATUSES.map((status) => ({
+    key: status,
+    label: status,
+  }));
+
   // execute query
-  const { loading, error, data, refetch } =
-    useQuery<GetOrdersResponse>(GET_PENDING_ORDERS);
+  const { loading, error, data, refetch } = useQuery<
+    GetOrdersResponse,
+    GetOrdersVariables
+  >(GET_ORDERS_BY_STATUS, {
+    variables: { status: activeTab },
+    notifyOnNetworkStatusChange: true,
+  });
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -97,6 +125,12 @@ export default function FulfillmentDashboard() {
       message.error("Failed to update order status.");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleTabChange = (key: string) => {
+    if (ORDER_STATUSES.includes(key as OrderStatus)) {
+      setActiveTab(key as DashboardTabStatus);
     }
   };
 
@@ -123,12 +157,6 @@ export default function FulfillmentDashboard() {
     );
   }
 
-  // create a unique 'key' for every row
-  const tableData = data?.orders.map((order: Order) => ({
-    ...order,
-    key: order.id,
-  }));
-
   // columns for the main table
   const columns: TableColumnsType<Order> = [
     { title: "Customer", dataIndex: ["customer", "name"], key: "name" },
@@ -138,21 +166,25 @@ export default function FulfillmentDashboard() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => <Tag color="processing">{status}</Tag>,
+      render: (status: OrderStatus) => <Tag color="processing">{status}</Tag>,
     },
 
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
-        <Button
-          type="primary"
-          loading={updatingId === record.id}
-          onClick={() => handleMarkPurchased(record.id)}
-        >
-          Mark Purchased
-        </Button>
-      ),
+      render: (_, record) => {
+        if (activeTab !== "Pending") return "-";
+
+        return (
+          <Button
+            type="primary"
+            loading={updatingId === record.id}
+            onClick={() => handleMarkPurchased(record.id)}
+          >
+            Mark Purchased
+          </Button>
+        );
+      },
     },
   ];
 
@@ -198,10 +230,16 @@ export default function FulfillmentDashboard() {
           </Button>
         }
       >
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          items={tabItems}
+        />
         <Table
+          rowKey="id"
           columns={columns}
           expandable={{ expandedRowRender }}
-          dataSource={tableData}
+          dataSource={data?.orders ?? []}
           pagination={{ pageSize: 10 }}
         />
       </Card>
