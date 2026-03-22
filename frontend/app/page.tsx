@@ -16,6 +16,7 @@ import {
   TableColumnsType,
   Tabs,
   message,
+  Space,
 } from "antd";
 import NewOrderDrawer from "@/components/NewOrderDrawer";
 
@@ -104,6 +105,10 @@ export default function FulfillmentDashboard() {
     notifyOnNetworkStatusChange: true,
   });
 
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -134,6 +139,16 @@ export default function FulfillmentDashboard() {
     }
   };
 
+  const handleOpenInvoice = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsInvoiceOpen(true);
+  };
+
+  const handleCloseInvoice = () => {
+    setSelectedOrderId(null);
+    setIsInvoiceOpen(true);
+  };
+
   // ======================
   // ERROR & LOADING STATES
   // ======================
@@ -144,6 +159,7 @@ export default function FulfillmentDashboard() {
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="p-10">
@@ -172,19 +188,21 @@ export default function FulfillmentDashboard() {
     {
       title: "Action",
       key: "action",
-      render: (_, record) => {
-        if (activeTab !== "Pending") return "-";
+      render: (_, record) => (
+        <Space size="small">
+          {activeTab === "Pending" && (
+            <Button
+              type="primary"
+              loading={updatingId === record.id}
+              onClick={() => handleMarkPurchased(record.id)}
+            >
+              Mark Purchased
+            </Button>
+          )}
 
-        return (
-          <Button
-            type="primary"
-            loading={updatingId === record.id}
-            onClick={() => handleMarkPurchased(record.id)}
-          >
-            Mark Purchased
-          </Button>
-        );
-      },
+          <Button onClick={() => handleOpenInvoice(record.id)}>Invoice</Button>
+        </Space>
+      ),
     },
   ];
 
@@ -216,8 +234,21 @@ export default function FulfillmentDashboard() {
       />
     );
   };
+
+  // ======================
+  // MAIN COMPONENT
+  // ======================
   return (
     <main className="min-h-screen p-8 bg-gray-50">
+      {isInvoiceOpen && selectedOrderId && (
+        <Alert
+          type="info"
+          showIcon
+          description={`Invoice placeholder for order ${selectedOrderId}`}
+          closable
+          onClose={handleCloseInvoice}
+        />
+      )}
       <Card
         title={
           <Title level={2} className="m-0">
